@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>ST-S.C.A.D.A — სისტემაში შესვლა</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Georgian", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 0%, #0c2d3a 0%, #0b0e14 62%);
+      color: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .gate-card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(20, 24, 33, 0.95);
+      border: 1px solid rgba(21, 170, 191, 0.35);
+      border-radius: 12px;
+      padding: 30px 28px;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.55);
+    }
+    .gate-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .gate-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: rgba(21, 170, 191, 0.18);
+      color: #3bc9db;
+      border: 1px solid rgba(59, 201, 219, 0.3);
+    }
+    .lang-btn {
+      background: transparent;
+      border: 1px solid #373a40;
+      color: #adb5bd;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .lang-btn:hover { border-color: #3bc9db; color: #fff; }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+      color: #f8f9fa;
+    }
+    .subtitle {
+      margin: 0 0 22px 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #909296;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 7px;
+      color: #ced4da;
+    }
+    .input-wrap {
+      position: relative;
+      margin-bottom: 15px;
+    }
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1px solid #373a40;
+      background: #10131a;
+      color: #f8f9fa;
+      font-size: 15px;
+      outline: none;
+    }
+    input:focus { border-color: #15aabf; box-shadow: 0 0 0 2px rgba(21, 170, 191, 0.2); }
+    .submit-btn {
+      width: 100%;
+      margin-top: 4px;
+      padding: 11px 16px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #0b7285 0%, #15aabf 100%);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .submit-btn:disabled { opacity: 0.6; cursor: wait; }
+    .error-msg {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(250, 82, 82, 0.14);
+      border: 1px solid rgba(250, 82, 82, 0.4);
+      color: #ff8787;
+      font-size: 13px;
+      display: none;
+    }
+    .sec-note {
+      margin-top: 18px;
+      font-size: 11px;
+      color: #5c5f66;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="gate-root" class="gate-card">
+    <div class="gate-top">
+      <span class="gate-badge">ST-S.C.A.D.A • v1.0 Core</span>
+      <button id="lang-toggle" type="button" class="lang-btn">EN</button>
+    </div>
+    <h1 id="lbl-title">სისტემაში შესვლა</h1>
+    <p id="lbl-sub" class="subtitle">მრავალ-კომპანიანი SCADA, DAQ და ტელემეტრიის დაცული პლატფორმა. შეიყვანეთ მომხმარებლის სახელი და პაროლი.</p>
+    <form id="unlock-form">
+      <label id="lbl-user" for="user-input">მომხმარებლის სახელი</label>
+      <div class="input-wrap">
+        <input id="user-input" type="text" autocomplete="username" required autofocus placeholder="admin" />
+      </div>
+      <label id="lbl-pass" for="pass-input">პაროლი</label>
+      <div class="input-wrap">
+        <input id="pass-input" type="password" autocomplete="current-password" required placeholder="••••••••••••" />
+      </div>
+      <button id="submit-btn" type="submit" class="submit-btn">შესვლა</button>
+      <div id="err-box" class="error-msg"></div>
+    </form>
+    <div id="lbl-sec" class="sec-note">დაცულია AES-256-GCM კრიპტოგრაფიული დაშიფვრით</div>
+  </div>
+
+  <script>
+    (function () {
+      const ITERATIONS = 250000;
+      const STORAGE_KEY = 'st_scada_demo_key_b64';
+
+      const STRINGS = {
+        ka: {
+          toggle: 'EN',
+          title: 'სისტემაში შესვლა',
+          sub: 'მრავალ-კომპანიანი SCADA, DAQ და ტელემეტრიის დაცული პლატფორმა. შეიყვანეთ მომხმარებლის სახელი და პაროლი.',
+          user: 'მომხმარებლის სახელი',
+          pass: 'პაროლი',
+          btn: 'შესვლა',
+          unlocking: 'მიმდინარეობს ავტორიზაცია და გაშიფვრა...',
+          wrong: 'მომხმარებლის სახელი ან პაროლი არასწორია.',
+          loadErr: 'დაშიფრული პაკეტის ჩატვირთვა ვერ მოხერხდა.',
+          sec: 'დაცულია AES-256-GCM კრიპტოგრაფიული დაშიფვრით'
+        },
+        en: {
+          toggle: 'KA',
+          title: 'Sign In',
+          sub: 'Multi-tenant SCADA, DAQ & telemetry protected portal. Enter your username and password.',
+          user: 'Username',
+          pass: 'Password',
+          btn: 'Sign In',
+          unlocking: 'Authenticating & decrypting AES-256...',
+          wrong: 'Invalid username or password.',
+          loadErr: 'Failed to download encrypted application payload.',
+          sec: 'Protected with client-side PBKDF2 + AES-256-GCM encryption'
+        }
+      };
+
+      let lang = 'ka';
+      const langBtn = document.getElementById('lang-toggle');
+      const titleEl = document.getElementById('lbl-title');
+      const subEl = document.getElementById('lbl-sub');
+      const userLbl = document.getElementById('lbl-user');
+      const passLbl = document.getElementById('lbl-pass');
+      const submitBtn = document.getElementById('submit-btn');
+      const errBox = document.getElementById('err-box');
+      const secEl = document.getElementById('lbl-sec');
+      const userInput = document.getElementById('user-input');
+      const passInput = document.getElementById('pass-input');
+      const form = document.getElementById('unlock-form');
+
+      function applyLang() {
+        const s = STRINGS[lang];
+        langBtn.textContent = s.toggle;
+        titleEl.textContent = s.title;
+        subEl.textContent = s.sub;
+        userLbl.textContent = s.user;
+        passLbl.textContent = s.pass;
+        submitBtn.textContent = s.btn;
+        secEl.textContent = s.sec;
+      }
+
+      langBtn.addEventListener('click', function () {
+        lang = lang === 'ka' ? 'en' : 'ka';
+        applyLang();
+      });
+
+      function b64ToBytes(b64) {
+        const bin = atob(b64);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+      }
+
+      let cachedPayloadPromise = null;
+      function fetchPayload() {
+        if (!cachedPayloadPromise) {
+          cachedPayloadPromise = fetch('./payload.enc?v=bc91e8029074', { cache: 'no-store' }).then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.arrayBuffer();
+          });
+        }
+        return cachedPayloadPromise;
+      }
+
+      function parseEnvelope(payloadBuf) {
+        const view = new DataView(payloadBuf);
+        const headerLen = view.getUint32(0, false);
+        const allBytes = new Uint8Array(payloadBuf);
+        const headerJson = new TextDecoder().decode(allBytes.subarray(4, 4 + headerLen));
+        return {
+          header: JSON.parse(headerJson),
+          ciphertextAndTag: allBytes.subarray(4 + headerLen)
+        };
+      }
+
+      async function bootWithDek(dekB64, initialUser, envelope) {
+        const aesKey = await crypto.subtle.importKey(
+          'raw',
+          b64ToBytes(dekB64),
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['decrypt']
+        );
+
+        const compressedBuf = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: b64ToBytes(envelope.header.payloadIvB64) },
+          aesKey,
+          envelope.ciphertextAndTag
+        );
+
+        const ds = new DecompressionStream('gzip');
+        const decompressedStream = new Blob([compressedBuf]).stream().pipeThrough(ds);
+        const jsonText = await new Response(decompressedStream).text();
+        const bundle = JSON.parse(jsonText);
+
+        window.__ST_SCADA_STANDALONE_DEMO__ = true;
+        if (initialUser) {
+          window.__ST_SCADA_INITIAL_USER__ = initialUser;
+        }
+
+        const styleEl = document.createElement('style');
+        styleEl.textContent = bundle.css;
+        document.head.appendChild(styleEl);
+
+        document.body.innerHTML = '<div id="root"></div>';
+        document.body.style.display = 'block';
+        document.body.style.padding = '0';
+        document.body.style.background = 'none';
+
+        const jsBlob = new Blob([bundle.js], { type: 'text/javascript' });
+        const scriptEl = document.createElement('script');
+        scriptEl.type = 'module';
+        scriptEl.src = URL.createObjectURL(jsBlob);
+        document.body.appendChild(scriptEl);
+      }
+
+      // Restore tab session if already unlocked in this tab
+      (async function tryRestoreSession() {
+        try {
+          const saved = sessionStorage.getItem(STORAGE_KEY);
+          if (!saved) return;
+          const parsed = JSON.parse(saved);
+          const payloadBuf = await fetchPayload();
+          const envelope = parseEnvelope(payloadBuf);
+          if (parsed.saltB64 !== envelope.header.saltB64 || !parsed.dekB64) {
+            sessionStorage.removeItem(STORAGE_KEY);
+            return;
+          }
+          await bootWithDek(parsed.dekB64, null, envelope);
+        } catch (e) {
+          sessionStorage.removeItem(STORAGE_KEY);
+        }
+      })();
+
+      form.addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        errBox.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = STRINGS[lang].unlocking;
+
+        let payloadBuf;
+        try {
+          payloadBuf = await fetchPayload();
+        } catch (e) {
+          errBox.textContent = STRINGS[lang].loadErr;
+          errBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = STRINGS[lang].btn;
+          return;
+        }
+
+        try {
+          const envelope = parseEnvelope(payloadBuf);
+          const normUser = userInput.value.trim().toLowerCase();
+          const rawPass = passInput.value;
+
+          const keyMaterial = await crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(normUser + ':' + rawPass),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+          );
+          const kek = await crypto.subtle.deriveKey(
+            {
+              name: 'PBKDF2',
+              salt: b64ToBytes(envelope.header.saltB64),
+              iterations: ITERATIONS,
+              hash: 'SHA-256'
+            },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt']
+          );
+
+          let unlockedSlot = null;
+          for (let i = 0; i < envelope.header.slots.length; i++) {
+            const s = envelope.header.slots[i];
+            try {
+              const slotPlain = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: b64ToBytes(s.ivB64) },
+                kek,
+                b64ToBytes(s.ctB64)
+              );
+              unlockedSlot = JSON.parse(new TextDecoder().decode(slotPlain));
+              break;
+            } catch (_) {}
+          }
+
+          if (!unlockedSlot) {
+            throw new Error('INVALID_CREDENTIALS');
+          }
+
+          try {
+            sessionStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify({
+                saltB64: envelope.header.saltB64,
+                dekB64: unlockedSlot.dekB64
+              })
+            );
+          } catch (_) {}
+
+          await bootWithDek(unlockedSlot.dekB64, unlockedSlot.user, envelope);
+        } catch (err) {
+          errBox.textContent = STRINGS[lang].wrong;
+          errBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = STRINGS[lang].btn;
+          passInput.select();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
